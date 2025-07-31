@@ -1,13 +1,11 @@
 package com.example.deadlinecty2.data
 
 
-import android.R.attr.data
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.util.Log
-import android.util.Log.e
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -268,6 +266,29 @@ fun uploadImageAndSendSocket(
                 Log.d("UploadDebug", "Upload ảnh thành công")
                 val mediaIds = existingMediaItems.map { it.media_id }
                 val keyError = RandomKey()
+                //------------------------
+                // Lấy URL ảnh từ response (giả sử server trả về URL trong uploadResponse)
+                val mediaUrl = uploadResponse.data?.firstOrNull()?.original?.url ?: ""
+                val fullImageUrl = if (mediaUrl.isNotBlank()) {
+                    "https://short.techres.vn/$mediaUrl"
+                } else {
+                    uri.toString() // Sử dụng URI cục bộ nếu không có URL từ server
+                }
+
+                // Thêm tin nhắn ảnh vào tinNhanList ngay lập tức
+                viewModelScope.launch(Dispatchers.Main) {
+                    val sharedPref = context.getSharedPreferences("myAppCache", Context.MODE_PRIVATE)
+                    val userIdCache = sharedPref.getInt("user_id", 0)
+                    tinNhanList.add(0, TinNhan(
+                        isMine = true, // Tin nhắn của người gửi
+                        text = null,
+                        imageUrl = fullImageUrl,
+                        time = getCurrentTime(),
+                        groupId = conversationId
+                    ))
+                    Log.d("ImageMessageAdded", "Đã thêm tin nhắn ảnh cục bộ: $fullImageUrl")
+                }
+                //---------------------------
 
                 val emitData = JSONObject().apply {
                     put("conversation_id", conversationId)
@@ -334,6 +355,8 @@ fun uploadImageAndSendSocket(
             }
         }
     }
+
+
 
 
 
