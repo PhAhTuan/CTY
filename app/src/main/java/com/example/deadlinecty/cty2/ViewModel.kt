@@ -125,23 +125,23 @@ class MessageViewModel : ViewModel() {
                         uri.toString()
                     }
                     Log.d("fullimageurl", Gson().toJson(fullImageUrl))
-                    viewModelScope.launch(Dispatchers.Main) {
-
-                        tinNhanList.add(0, TinNhan(
-                            isMine = true,
-                            imageUrl = fullImageUrl,
-                            time = getCurrentTime(),
-                            groupId = conversationId,
-                            audioUrl = null,
-                            createdAt = "",
-                            fileName = null,
-                            keyError = randomKey(),
-                            media =  emptyList(),
-                            messageType = 2,
-                            message = "",
-                        ))
-                        Log.d("ImageMessagephoto", "Đã thêm tin nhắn ảnh cục bộ: $fullImageUrl")
-                    }
+//                    viewModelScope.launch(Dispatchers.Main) {
+//
+//                        tinNhanList.add(0, TinNhan(
+//                            isMine = true,
+//                            imageUrl = fullImageUrl,
+//                            time = getCurrentTime(),
+//                            groupId = conversationId,
+//                            audioUrl = null,
+//                            createdAt = "",
+//                            fileName = null,
+//                            keyError = randomKey(),
+//                            media =  emptyList(),
+//                            messageType = 2,
+//                            message = "",
+//                        ))
+//                        Log.d("ImageMessagephoto", "Đã thêm tin nhắn ảnh cục bộ: $fullImageUrl")
+//                    }
                     Log.d("Generate", "Generate thành công: ${Gson().toJson(response.body()?.data)}")
                     uploadImageAndSendSocket(context, uri, response.body()?.data ?: emptyList(), conversationId)
 
@@ -365,7 +365,7 @@ class MessageViewModel : ViewModel() {
                             tinNhanList.add(0, TinNhan(
                                 isMine = userId == userIdCache,
                                 imageUrl = fullImageUrl,
-                                time = createdAt,
+                                time = getCurrentTime(),
                                 groupId = conversationId,
                                 audioUrl = null,
                                 createdAt = "",
