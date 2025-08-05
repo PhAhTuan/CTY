@@ -7,7 +7,8 @@ data class MediaResponse(
 )
 
 data class MediaItem(
-    val is_keep: Int = 1,
+    @SerializedName("is_keep")
+    val isKeep: Int = 1,
     val size: Int,
     val name: String,
     val width: Int,
@@ -23,8 +24,10 @@ data class GenerateResponse(
 )
 
 data class MediaItemUpload(
-    val key_error: String,
-    val media_id: String,
+    @SerializedName("key_error")
+    val keyError: String,
+    @SerializedName("media_id")
+    val mediaId: String,
     val type: Int,
     val original: MediaContent?,
     val thumb: MediaContent?,
@@ -32,12 +35,12 @@ data class MediaItemUpload(
 )
 
 data class MediaContent(
-    @SerializedName("url")
     val url: String,
     val name: String,
     val size: Int,
     val width: Int,
     val height: Int,
-    val link_full: String? = null
+    @SerializedName("link_full")
+    val linkFull: String? = null
 )
 

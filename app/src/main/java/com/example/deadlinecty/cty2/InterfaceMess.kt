@@ -1,7 +1,6 @@
 package com.example.deadlinecty2.data
 
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,7 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,13 +53,10 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import com.example.deadlinecty.cty2.MediaResponse
 import com.google.gson.Gson
@@ -92,7 +87,6 @@ fun HomeScreenTN(groupChat: DataChat, navController: NavController, messageViewM
     Column(modifier = Modifier.fillMaxSize()) {
         HeadTN(groupChat = groupChat, navController)
         BodyTN(
-            context,
             tinNhanList = messageViewModel.tinNhanList,
             modifier = Modifier.weight(1f),
 
@@ -188,7 +182,6 @@ fun HeadTN(groupChat: DataChat, navController: NavController){
 
 @Composable
 fun BodyTN(
-    context: Context,
     tinNhanList: List<TinNhan>,
     modifier: Modifier = Modifier
 ) {
@@ -267,14 +260,14 @@ fun EndTN(messageViewModel: MessageViewModel, conversationId: String) {
         IconButton(
             onClick = {
                 if (sendText.isNotBlank() || imageUri != null) {
-                    messageViewModel.sendTinNhan(sendText, conversationId)
+                    messageViewModel.sendTinNhan(sendText)
                     sendText = ""
                 }
             },
             modifier = Modifier.size(36.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Send,
+                imageVector = Icons.AutoMirrored.Filled.Send,
                 contentDescription = "Gửi",
                 modifier = Modifier
                     .size(36.dp),

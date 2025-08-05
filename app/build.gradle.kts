@@ -65,6 +65,7 @@ dependencies {
 
     }
     implementation("net.gotev:uploadservice:4.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

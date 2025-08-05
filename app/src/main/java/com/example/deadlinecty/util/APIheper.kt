@@ -34,16 +34,16 @@ fun getSession(context: android.content.Context, onComplete: () -> Unit) {
     })
 }
 
-fun   getConfig(context: android.content.Context, restaurantName: String, onComplete: () -> Unit) {
+fun  getConfig(context: android.content.Context, restaurantName: String, onComplete: () -> Unit) {
     val sharedPref = context.getSharedPreferences("myAppCache", android.content.Context.MODE_PRIVATE)
     RetrofitClient.instance.getConfig(8003, "annhonquan", "net.techres.seemt.api").enqueue(object : Callback<ConfigResponse> {
         override fun onResponse(call: Call<ConfigResponse>, response: Response<ConfigResponse>) {
             if (response.isSuccessful && response.body()?.data != null) {
                 val config = response.body()?.data
-                sharedPref.edit()
-                    .putString("api_key", config?.api_key ?: "")
-                    .putString("type", config?.type ?: "")
-                    .apply()
+                sharedPref.edit {
+                    putString("api_key", config?.api_key ?: "")
+                    putString("type", config?.type ?: "")
+                }
                 Log.d("API", "Config OK: ${config?.api_key}")
                 onComplete()
             } else {
@@ -66,7 +66,7 @@ fun login(context: android.content.Context, username: String, password: String, 
 
     val authorization = "$type $session:$apiKey"
     Log.d("token",authorization)
-    var body = LoginBody(
+    val body = LoginBody(
         encodePasswordBase64(password),
         3,
         "7da73693c4e4b924",
@@ -79,14 +79,14 @@ fun login(context: android.content.Context, username: String, password: String, 
     RetrofitClient.instance.login(authorization, 8003, body)
         .enqueue(object : Callback<com.example.deadlinecty.model.LoginResponse> {
             override fun onResponse(call: Call<com.example.deadlinecty.model.LoginResponse>, response: Response<com.example.deadlinecty.model.LoginResponse>) {
-                if (response.isSuccessful) {
+                if (response.isSuccessful && response.body()?.status == 200) {
                     val loginData = response.body()!!.data
                     Log.d("login", Gson().toJson(response.body()!!.data))
-                    sharedPref.edit()
-                        .putString("access_token", loginData?.access_token)
-                        .putString("jwt_token", loginData?.jwt_token)
-                        .putInt("user_id", loginData?.id ?: -1)
-                        .commit()
+                    sharedPref.edit {
+                        putString("access_token", loginData?.access_token)
+                        putString("jwt_token", loginData?.jwt_token)
+                        putInt("user_id", loginData?.id ?: -1)
+                    }
                     Log.d("API", "Đăng nhập thành công: ${loginData?.username}")
                     val socketUrl = "https://realtime-chat.techres.vn"
                     SocketManager.connectSocket(context, socketUrl)

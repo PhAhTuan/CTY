@@ -201,7 +201,7 @@ data class MessageData(
     val media: List<Media>,
     @SerializedName("is_timeline")
     val isTimeline: Int,
-    val is_mine: Boolean = false,
+    //val is_mine: Boolean = false,
 )
 
 data class MessageUser(

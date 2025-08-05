@@ -1,8 +1,6 @@
 package com.example.deadlinecty2.data
 
 
-import android.R.attr.data
-import android.R.id.message
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -43,10 +41,10 @@ class HomeViewModel : ViewModel() {
                         response.data.map { item ->
                             Log.d("item", Gson().toJson(item))
                             DataChat(
-                                conversationId = item.conversationId  ?: "",
-                                name = item.name ?: "",
+                                conversationId = item.conversationId  ,
+                                name = item.name ,
                                 lastMessage = item.lastMessage.message.ifBlank { "Không có tin nhắn" },
-                                time = item.lastActivity ?: "",
+                                time = item.lastActivity ,
                                 avatarUrl = item.avatar.thumb.url,
                                 noOfNotSeen = item.noOfNotSeen ,
                                 noOfMember = item.noOfMember
@@ -157,15 +155,15 @@ class MessageViewModel : ViewModel() {
     }
 
 
-    fun sendTinNhan(message: String, conversationId: String) {
+    fun sendTinNhan(message: String) {
         val data = MessageSendModel(
             message = message,
             thumb = Thumb(),
-            key_error = randomKey(),
+            keyError = randomKey(),
         )
         Log.d("emit data", Gson().toJson(data))
         Log.d("tin nhan gui", "tin nhắn là: ${data.message}")
-        Log.d("key_error", "key_error: ${data.key_error}")
+        Log.d("key_error", "key_error: ${data.keyError}")
 
 
         SocketManager.socket?.emit("message-text-v1", JSONObject(Gson().toJson(data)))
@@ -228,7 +226,7 @@ class MessageViewModel : ViewModel() {
         val fileSize = queryFileSize(context, uri)
         val (width, height) = getImageDimensions(context, uri)
         return MediaItem(
-            is_keep = 1,
+            isKeep = 1,
             size = fileSize.toInt(),
             name = fileName,
             width = width,
@@ -296,7 +294,7 @@ class MessageViewModel : ViewModel() {
                     )
                     val mediaIdPart = MultipartBody.Part.createFormData(
                         name = "medias[$index][media_id]",
-                        value = mediaItem.media_id
+                        value = mediaItem.mediaId
                     )
                     val typePart = MultipartBody.Part.createFormData(
                         name = "medias[$index][type]",
@@ -316,7 +314,7 @@ class MessageViewModel : ViewModel() {
                 Log.d("UploadResponse", "Response: ${Gson().toJson(response.body())}")
                 if (response.isSuccessful && uploadResponse != null) {
                     Log.d("UploadDebug", "Upload ảnh thành công")
-                    val mediaIds = existingMediaItems.map { it.media_id }
+                    val mediaIds = existingMediaItems.map { it.mediaId }
                     val keyError = randomKey()
                     val emitData = JSONObject().apply {
                         put("conversation_id", conversationId)

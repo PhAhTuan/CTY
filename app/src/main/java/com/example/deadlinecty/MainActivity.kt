@@ -58,7 +58,6 @@ import com.example.deadlinecty.util.login
 import com.example.deadlinecty2.data.HomeScreenTN
 import com.example.deadlinecty2.data.HomeViewModel
 import com.example.deadlinecty2.data.MessageViewModel
-import com.example.deadlinecty2.data.SocketManager
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -159,9 +158,9 @@ fun HomeScreen(navController: NavHostController) {
 
     @Composable
 fun NhapThongTin(navController: NavHostController, openDialog: MutableState<Boolean>){
-    var tencty = remember { mutableStateOf("") }
-    var sdt = remember { mutableStateOf("") }
-    var matkhau = remember { mutableStateOf("") }
+    val tencty = remember { mutableStateOf("") }
+    val sdt = remember { mutableStateOf("") }
+    val matkhau = remember { mutableStateOf("") }
     val passwordVisibility = remember { mutableStateOf(false) }
 //    val isPhoneValid = sdt.value.matches(Regex("^0\\d{9}$"))
 //    val hasLetter = matkhau.value.any { it.isLetter() }
@@ -278,6 +277,8 @@ fun NhapThongTin(navController: NavHostController, openDialog: MutableState<Bool
         }
     }
 }
+
+
 
 @Composable
 fun BackgroundHome() {

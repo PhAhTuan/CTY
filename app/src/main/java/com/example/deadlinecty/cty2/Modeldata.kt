@@ -7,34 +7,34 @@ data class MessageSendModel(
         val code: String = "",
 
         @SerializedName("create_at")
-        val create_at: String = "",
+        val createAt: String = "",
 
         @SerializedName("link")
         val link: List<String> = emptyList(),
 
         @SerializedName("link_join_group")
-        val link_join_group: String = "",
+        val linkJoinGroup: String = "",
 
         @SerializedName("media")
         val media: List<String> = emptyList(),
 
         @SerializedName("message_reply_id")
-        val message_reply_id: String = "",
+        val messageReplyId: String = "",
 
         @SerializedName("message_vote_id")
-        val message_vote_id: String = "",
+        val messageVoteId: String = "",
 
         @SerializedName("order_id")
-        val order_id: String = "",
+        val orderId: String = "",
 
         @SerializedName("order_platform")
-        val order_platform: Int = 0,
+        val orderPlatform: Int = 0,
 
         @SerializedName("received_at")
-        val received_at: String = "",
+        val receivedAt: String = "",
 
         @SerializedName("sticker_id")
-        val sticker_id: String = "",
+        val stickerId: String = "",
 
         @SerializedName("tag")
         val tag: List<String> = emptyList(),
@@ -42,12 +42,12 @@ data class MessageSendModel(
         val message: String,
 
         @SerializedName("key_error")
-        val key_error: String,
+        val keyError: String,
 
         @SerializedName("thumb")
         val thumb: Thumb,
 
-        val media_id: String? = null
+        val mediaId: String? = null
 )
 
 data class Thumb(

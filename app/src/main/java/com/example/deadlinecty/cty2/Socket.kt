@@ -49,10 +49,10 @@ object SocketManager {
             Log.e("SocketIO", "Lỗi khi khởi tạo socket: ${e.message}")
         }
     }
-    fun disconnectSocket() {
-        socket?.disconnect()
-        socket?.off()
-    }
+//    fun disconnectSocket() {
+//        socket?.disconnect()
+//        socket?.off()
+//    }
 }
 
 
