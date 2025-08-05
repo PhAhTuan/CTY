@@ -108,7 +108,6 @@ data class LastMessage(
 data class UserSeen(
     @SerializedName("user_id")
     val userId: Int,
-
     val type: Int,
     val name: String,
     val avatar: String
@@ -117,13 +116,10 @@ data class UserSeen(
 data class Media(
     @SerializedName("media_id")
     val mediaId: String,
-
     val type: Int,
     val content: String,
-
     @SerializedName("created_at")
     val createdAt: String,
-
     val original: ImageInfo,
     val medium: ImageInfo,
     val thumb: ImageInfo
@@ -166,7 +162,7 @@ data class ImageInfo(
     @SerializedName("link_full")
     val linkFull: String? = null
 )
-
+//----------------------------------------------------
 data class MessageApiResponse(
     val status: Int,
     val message: String,
@@ -176,26 +172,46 @@ data class MessageApiResponse(
 data class MessageData(
     @SerializedName("message_id")
     val messageId: String,
-
+    @SerializedName("message_type")
+    val messageType: Int,
     val message: String,
-
+    val user: MessageUser,
+    val conversation: Conversation,
+    val position: String,
     @SerializedName("created_at")
     val createdAt: String,
-
-    val user: MessageUser,
-
-    val conversation: ConversationInfo
+    @SerializedName("updated_at")
+    val updatedAt: String,
+    @SerializedName("my_reaction")
+    val myReaction: Int,
+    @SerializedName("no_of_reaction")
+    val noOfReaction: Int,
+    @SerializedName("no_of_like")
+    val noOfLike: Int,
+    @SerializedName("no_of_love")
+    val noOfLove: Int,
+    @SerializedName("no_of_haha")
+    val noOfHaha: Int,
+    @SerializedName("no_of_wow")
+    val noOfWow: Int,
+    @SerializedName("no_of_sad")
+    val noOfSad: Int,
+    @SerializedName("no_of_angry")
+    val noOfAngry: Int,
+    val media: List<Media>,
+    @SerializedName("is_timeline")
+    val isTimeline: Int,
+    val is_mine: Boolean = false,
 )
 
 data class MessageUser(
     @SerializedName("user_id")
     val userId: Int,
-
     val name: String,
     val avatar: String
 )
 
-data class ConversationInfo(
+data class Conversation(
     @SerializedName("conversation_id")
     val conversationId: String,
     val name: String

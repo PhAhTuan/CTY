@@ -1,6 +1,8 @@
 package com.example.deadlinecty2.data
 
 
+import android.R.attr.data
+import android.R.id.message
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -22,6 +24,8 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlin.collections.forEachIndexed
 
 class HomeViewModel : ViewModel() {
@@ -63,12 +67,12 @@ class HomeViewModel : ViewModel() {
 class MessageViewModel : ViewModel() {
     var tinNhanList = mutableStateListOf<TinNhan>()
         private set
-    private val authorizationToken = "Bearer 028a2bb7-227c-4581-85d3-257478e0e4b0"
-    fun loadMessagesFromApi(context:Context,conversationId: String) {
-        val sharedPref = context.getSharedPreferences("myAppCache", Context.MODE_PRIVATE)
 
+    fun loadMessagesFromApi(context: Context, conversationId: String) {
+        val sharedPref = context.getSharedPreferences("myAppCache", Context.MODE_PRIVATE)
         val userIdCache = sharedPref.getInt("user_id", 0)
         val token = sharedPref.getString("access_token", "")
+
         viewModelScope.launch {
             try {
                 val response = RetrofitclientChat.RetrofitClient.apiServicechat.getMessages(
@@ -76,23 +80,34 @@ class MessageViewModel : ViewModel() {
                     authorization = "Bearer $token"
                 )
                 Log.d("messageList", Gson().toJson(response))
+
                 tinNhanList.clear()
                 tinNhanList.addAll(
                     response.data.map { messageData ->
+                        val firstMedia = messageData.media.firstOrNull()
+
                         TinNhan(
                             isMine = messageData.user.userId == userIdCache,
-                            text = messageData.message,
-                            time = messageData.createdAt,
-                            groupId = conversationId
+                            message = messageData.message,
+                            createdAt = messageData.createdAt,
+                            groupId = conversationId,
+                            media = messageData.media,
+                            messageType = messageData.messageType,
+                            time = "",
+                            audioUrl = null,
+                            imageUrl = firstMedia?.original?.url,
+                            keyError = randomKey(),
                         )
                     }
                 )
+
                 Log.d("tinnhanlist", Gson().toJson(tinNhanList))
             } catch (e: Exception) {
                 Log.e("MessageViewModel", "Error loading messages: ${e.message}")
             }
         }
     }
+
     fun uploadMedia(mediaResponse: MediaResponse, uri: Uri,context: Context, conversationId: String) {
         viewModelScope.launch {
             try {
@@ -101,10 +116,36 @@ class MessageViewModel : ViewModel() {
                     authorization = "Bearer 028a2bb7-227c-4581-85d3-257478e0e4b0",
                     mediaResponse = mediaResponse
                 )
+                val uploadResponse = response.body()
                 if (response.isSuccessful) {
                     Log.d("Generate", "Generate thành công: ${Gson().toJson(response.body()?.data)}")
-                    uploadImageAndSendSocket(context, uri, response.body()?.data ?: emptyList(), conversationId)
 
+                    val mediaUrl = uploadResponse?.data?.firstOrNull()?.original?.url ?: ""
+                    val fullImageUrl = if (mediaUrl.isNotBlank()) {
+                        "https://short.techres.vn/$mediaUrl"
+                    } else {
+                        uri.toString()
+                    }
+                    Log.d("fullimageurl", Gson().toJson(fullImageUrl))
+                    viewModelScope.launch(Dispatchers.Main) {
+
+                        tinNhanList.add(0, TinNhan(
+                            isMine = true,
+                            imageUrl = fullImageUrl,
+                            time = getCurrentTime(),
+                            groupId = conversationId,
+                            audioUrl = null,
+                            createdAt = "",
+                            fileName = null,
+                            keyError = randomKey(),
+                            media =  emptyList(),
+                            messageType = 2,
+                            message = "",
+                        ))
+                        Log.d("ImageMessagephoto", "Đã thêm tin nhắn ảnh cục bộ: $fullImageUrl")
+                    }
+                    Log.d("Generate", "Generate thành công: ${Gson().toJson(response.body()?.data)}")
+                    uploadImageAndSendSocket(context, uri, response.body()?.data ?: emptyList(), conversationId)
 
                 } else {
                     Log.e("Generate", "Lỗi: ${response.errorBody()?.string()}")
@@ -120,7 +161,7 @@ class MessageViewModel : ViewModel() {
         val data = MessageSendModel(
             message = message,
             thumb = Thumb(),
-            key_error = RandomKey(),
+            key_error = randomKey(),
         )
         Log.d("emit data", Gson().toJson(data))
         Log.d("tin nhan gui", "tin nhắn là: ${data.message}")
@@ -137,35 +178,46 @@ class MessageViewModel : ViewModel() {
             val userIdCache = sharedPref.getInt("user_id", 0)
 
             val data = args[0] as JSONObject
-            val userObject = data.getJSONObject("user")
-            val userId = userObject.getInt("user_id")
-            val message = data.getString("message")
-            val time = data.getString("created_at")
-
-
             Log.d("nhantinnhanok", Gson().toJson(data))
-            Log.d("userIdCache", userIdCache.toString())
-            Log.d("userId", userId.toString())
-            tinNhanList.add(0,
-                TinNhan(
-                    isMine = userId === userIdCache,
-                    text = message,
-                    time = time,
-                    groupId = ""
+
+            try {
+                val userObject = data.getJSONObject("user")
+                val userId = userObject.getInt("user_id")
+                val message = data.optString("message", "")
+                val createdAt = data.optString("created_at", "")
+                val messageType = data.optInt("message_type", 1)
+
+                Log.d("userIdCache", userIdCache.toString())
+                Log.d("userId", userId.toString())
+
+                tinNhanList.add(0,
+                    TinNhan(
+                        isMine = userId == userIdCache,
+                        message = message,
+                        messageType = messageType,
+                        time = createdAt,
+                        createdAt = createdAt,
+                        groupId = data.optString("conversation_id", ""),
+                        imageUrl = null,
+                        audioUrl = null,
+                        fileName = null,
+                        keyError = randomKey(),
+                        media = emptyList()
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                Log.e("MessageTextError", "Lỗi xử lý tin nhắn text: ${e.message}")
+            }
         }
     }
 
+
     private fun getCurrentTime(): String {
         val currentTime = System.currentTimeMillis()
-        val dateFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         return dateFormat.format(currentTime)
     }
-    fun deleteMessage(conversationId: String, message: TinNhan) {
-        tinNhanList.remove(message)
-    }
-    fun RandomKey(length: Int = 10): String {
+    fun randomKey(length: Int = 10): String {
         val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         return (1..length)
             .map { allowedChars.random() }
@@ -215,101 +267,77 @@ class MessageViewModel : ViewModel() {
         return options.outWidth to options.outHeight
     }
 
-fun uploadImageAndSendSocket(
-    context: Context,
-    uri: Uri,
-    existingMediaItems: List<MediaItemUpload>,
-    conversationId: String
-) {
-    viewModelScope.launch(Dispatchers.IO) {
-        try {
-            val parts = mutableListOf<MultipartBody.Part>()
-            val contentResolver = context.contentResolver
+    fun uploadImageAndSendSocket(
+        context: Context,
+        uri: Uri,
+        existingMediaItems: List<MediaItemUpload>,
+        conversationId: String
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val parts = mutableListOf<MultipartBody.Part>()
+                val contentResolver = context.contentResolver
 
-            existingMediaItems.forEachIndexed { index, mediaItem ->
-                val fileName = queryFileName(context, uri)
-                val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
-                val fileBytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                existingMediaItems.forEachIndexed { index, mediaItem ->
+                    val fileName = queryFileName(context, uri)
+                    val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+                    val fileBytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
 
-                if (fileBytes == null || fileBytes.isEmpty()) {
-                    Log.d("uploadImage", "Không có dữ liệu để upload từ InputStream: $uri")
-                    return@forEachIndexed
+                    if (fileBytes == null || fileBytes.isEmpty()) {
+                        Log.d("uploadImage", "Không có dữ liệu để upload từ InputStream: $uri")
+                        return@forEachIndexed
+                    }
+
+                    val requestBody = fileBytes.toRequestBody(mimeType.toMediaTypeOrNull())
+                    val filePart = MultipartBody.Part.createFormData(
+                        name = "medias[$index][file]",
+                        filename = fileName,
+                        body = requestBody
+                    )
+                    val mediaIdPart = MultipartBody.Part.createFormData(
+                        name = "medias[$index][media_id]",
+                        value = mediaItem.media_id
+                    )
+                    val typePart = MultipartBody.Part.createFormData(
+                        name = "medias[$index][type]",
+                        value = "0" // type = 0 cho ảnh
+                    )
+
+                    parts.add(filePart)
+                    parts.add(mediaIdPart)
+                    parts.add(typePart)
                 }
+                // 3. Gửi multipart upload
+                val response = RetrofitPhoto.retrofitMedia.uploadImage(
+                    authorization = "Bearer 028a2bb7-227c-4581-85d3-257478e0e4b0",
+                    medias = parts
+                )
+                val uploadResponse = response.body()
+                Log.d("UploadResponse", "Response: ${Gson().toJson(response.body())}")
+                if (response.isSuccessful && uploadResponse != null) {
+                    Log.d("UploadDebug", "Upload ảnh thành công")
+                    val mediaIds = existingMediaItems.map { it.media_id }
+                    val keyError = randomKey()
+                    val emitData = JSONObject().apply {
+                        put("conversation_id", conversationId)
+                        put("key_error", keyError)
+                        put("media", JSONArray(mediaIds))
+                    }
 
-                val requestBody = fileBytes.toRequestBody(mimeType.toMediaTypeOrNull())
-                val filePart = MultipartBody.Part.createFormData(
-                    name = "medias[$index][file]",
-                    filename = fileName,
-                    body = requestBody
-                )
-                val mediaIdPart = MultipartBody.Part.createFormData(
-                    name = "medias[$index][media_id]",
-                    value = mediaItem.media_id
-                )
-                val typePart = MultipartBody.Part.createFormData(
-                    name = "medias[$index][type]",
-                    value = "0" // type = 0 cho ảnh
-                )
-
-                parts.add(filePart)
-                parts.add(mediaIdPart)
-                parts.add(typePart)
-            }
-            // 3. Gửi multipart upload
-            val response = RetrofitPhoto.retrofitMedia.uploadImage(
-                authorization = "Bearer 028a2bb7-227c-4581-85d3-257478e0e4b0",
-                medias = parts
-            )
-            val uploadResponse = response.body()
-            Log.d("UploadResponse", "Response: ${Gson().toJson(response.body())}")
-            if (response.isSuccessful && uploadResponse != null) {
-                Log.d("UploadDebug", "Upload ảnh thành công")
-                val mediaIds = existingMediaItems.map { it.media_id }
-                val keyError = RandomKey()
-                //------------------------
-                // Lấy URL ảnh từ response (giả sử server trả về URL trong uploadResponse)
-                val mediaUrl = uploadResponse.data?.firstOrNull()?.original?.url ?: ""
-                val fullImageUrl = if (mediaUrl.isNotBlank()) {
-                    "https://short.techres.vn/$mediaUrl"
+                    SocketManager.socket?.emit("message-image-v1", emitData)
+                    Log.d("EmitSocket", "Đã emit message-image-v1 với: $emitData")
                 } else {
-                    uri.toString() // Sử dụng URI cục bộ nếu không có URL từ server
+                    Log.d("UploadImage", "Upload không thành công: ${response.errorBody()?.string()}")
                 }
 
-                // Thêm tin nhắn ảnh vào tinNhanList ngay lập tức
-                viewModelScope.launch(Dispatchers.Main) {
-                    val sharedPref = context.getSharedPreferences("myAppCache", Context.MODE_PRIVATE)
-                    val userIdCache = sharedPref.getInt("user_id", 0)
-                    tinNhanList.add(0, TinNhan(
-                        isMine = true, // Tin nhắn của người gửi
-                        text = null,
-                        imageUrl = fullImageUrl,
-                        time = getCurrentTime(),
-                        groupId = conversationId
-                    ))
-                    Log.d("ImageMessageAdded", "Đã thêm tin nhắn ảnh cục bộ: $fullImageUrl")
-                }
-                //---------------------------
-
-                val emitData = JSONObject().apply {
-                    put("conversation_id", conversationId)
-                    put("key_error", keyError)
-                    put("media_id", JSONArray(mediaIds))
-                }
-
-                SocketManager.socket?.emit("message-image-v1", JSONObject(Gson().toJson(emitData)))
-                Log.d("EmitSocket", "Đã emit message-image-v1 với: $emitData")
-            } else {
-                Log.d("UploadImage", "Upload không thành công: ${response.errorBody()?.string()}")
+            } catch (e: Exception) {
+                Log.d("uploadImage", "Lỗi Exception: ${e.message}", e)
             }
-
-        } catch (e: Exception) {
-            Log.d("uploadImage", "Lỗi Exception: ${e.message}", e)
         }
     }
-}
-
 
     fun startListeningImageMessages(context: Context, conversationId: String) {
+        SocketManager.socket?.off("listen-message-image-v1")
         SocketManager.socket?.on("listen-message-image-v1") { args ->
             Log.d("listenImageMessage", "ĐÃ NHẬN SỰ KIỆN SOCKET: listen-message-image-v1")
             val sharedPref = context.getSharedPreferences("myAppCache", Context.MODE_PRIVATE)
@@ -321,10 +349,11 @@ fun uploadImageAndSendSocket(
             try {
                 val userObject = data.getJSONObject("user")
                 val userId = userObject.getInt("user_id")
-                val createdAt = data.getString("created_at")
-
-
+                val createdAt = data.optString("created_at", "")
+                val messageType = data.optInt("message_type", 2)
                 val mediaArray = data.getJSONArray("media")
+
+
                 if (mediaArray.length() > 0) {
                     val mediaObject = mediaArray.getJSONObject(0)
                     val original = mediaObject.getJSONObject("original")
@@ -337,10 +366,16 @@ fun uploadImageAndSendSocket(
                         viewModelScope.launch {
                             tinNhanList.add(0, TinNhan(
                                 isMine = userId == userIdCache,
-                                text = null,
                                 imageUrl = fullImageUrl,
                                 time = createdAt,
-                                groupId = conversationId
+                                groupId = conversationId,
+                                audioUrl = null,
+                                createdAt = "",
+                                fileName = null,
+                                keyError = randomKey(),
+                                media =  emptyList(),
+                                messageType = messageType,
+                                message = "",
                             ))
                             Log.d("ImageMessageAdded", "Đã thêm tin nhắn hình ảnh từ user $userId: $mediaUrl")
                         }
@@ -355,9 +390,6 @@ fun uploadImageAndSendSocket(
             }
         }
     }
-
-
-
 
 
 }
