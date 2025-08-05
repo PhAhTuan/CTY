@@ -56,6 +56,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.platform.LocalContext
 import com.example.deadlinecty.cty2.MediaResponse
@@ -293,6 +294,7 @@ fun TinNhanItem( tin: TinNhan) {
     ) {
         Box(
             modifier = Modifier
+                .clickable { showTime = !showTime }
                 .background(
                     if (isMine) Color(0xFFDCF8C6) else Color.White,
                     shape = RoundedCornerShape(8.dp)
@@ -330,9 +332,9 @@ fun TinNhanItem( tin: TinNhan) {
         if (showTime) {
             Text(
                 text = tin.createdAt,
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
-                modifier = Modifier.padding(top = 2.dp, start = 8.dp, end = 8.dp)
+                modifier = Modifier.padding(top = 2.dp)
             )
         }
     }

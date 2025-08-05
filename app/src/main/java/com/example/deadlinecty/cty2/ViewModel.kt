@@ -22,8 +22,6 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.Locale
 import kotlin.collections.forEachIndexed
 
 class HomeViewModel : ViewModel() {
@@ -125,23 +123,7 @@ class MessageViewModel : ViewModel() {
                         uri.toString()
                     }
                     Log.d("fullimageurl", Gson().toJson(fullImageUrl))
-//                    viewModelScope.launch(Dispatchers.Main) {
-//
-//                        tinNhanList.add(0, TinNhan(
-//                            isMine = true,
-//                            imageUrl = fullImageUrl,
-//                            time = getCurrentTime(),
-//                            groupId = conversationId,
-//                            audioUrl = null,
-//                            createdAt = "",
-//                            fileName = null,
-//                            keyError = randomKey(),
-//                            media =  emptyList(),
-//                            messageType = 2,
-//                            message = "",
-//                        ))
-//                        Log.d("ImageMessagephoto", "Đã thêm tin nhắn ảnh cục bộ: $fullImageUrl")
-//                    }
+
                     Log.d("Generate", "Generate thành công: ${Gson().toJson(response.body()?.data)}")
                     uploadImageAndSendSocket(context, uri, response.body()?.data ?: emptyList(), conversationId)
 
@@ -209,12 +191,6 @@ class MessageViewModel : ViewModel() {
         }
     }
 
-
-    private fun getCurrentTime(): String {
-        val currentTime = System.currentTimeMillis()
-        val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-        return dateFormat.format(currentTime)
-    }
     fun randomKey(length: Int = 10): String {
         val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         return (1..length)
@@ -365,7 +341,7 @@ class MessageViewModel : ViewModel() {
                             tinNhanList.add(0, TinNhan(
                                 isMine = userId == userIdCache,
                                 imageUrl = fullImageUrl,
-                                time = getCurrentTime(),
+                                time = createdAt,
                                 groupId = conversationId,
                                 audioUrl = null,
                                 createdAt = "",
