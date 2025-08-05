@@ -1,6 +1,7 @@
 package com.example.deadlinecty2.data
 
 
+import android.R.attr.name
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -198,6 +199,7 @@ class MessageViewModel : ViewModel() {
             .joinToString("")
     }
     fun getMediaInfoFromUri(context: Context, uri: Uri): MediaItem {
+        Log.d("getMediaInfoFromUri", "Uri: $uri")
         val fileName = queryFileName(context, uri)
         val fileSize = queryFileSize(context, uri)
         val (width, height) = getImageDimensions(context, uri)
@@ -212,6 +214,7 @@ class MessageViewModel : ViewModel() {
         )
     }
     fun queryFileName(context: Context, uri: Uri): String {
+        Log.d("queryFileName", "Query tên file từ Uri: $uri -> $name")
         var name = "unknown.jpg"
         val cursor = context.contentResolver.query(uri, null, null, null, null)
         cursor?.use {
@@ -223,6 +226,7 @@ class MessageViewModel : ViewModel() {
         return name
     }
     fun queryFileSize(context: Context, uri: Uri): Long {
+            Log.d("queryFileSize", "Query dung lượng file từ Uri: $uri ")
         var size: Long = 0
         val cursor = context.contentResolver.query(uri, null, null, null, null)
         cursor?.use {
@@ -235,6 +239,9 @@ class MessageViewModel : ViewModel() {
     }
     fun getImageDimensions(context: Context, uri: Uri): Pair<Int, Int> {
         val inputStream = context.contentResolver.openInputStream(uri)
+        if (inputStream == null) {
+            Log.e("getImageDimensions", "Không mở được inputStream từ Uri: $uri")
+        }
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeStream(inputStream, null, options)
         inputStream?.close()
@@ -255,6 +262,8 @@ class MessageViewModel : ViewModel() {
                 existingMediaItems.forEachIndexed { index, mediaItem ->
                     val fileName = queryFileName(context, uri)
                     val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
+                    Log.d("UploadImage", "Chuẩn bị upload ảnh từ Uri: $uri")
+                    Log.d("UploadImage", "mediaId: ${mediaItem.mediaId}")
                     val fileBytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
 
                     if (fileBytes == null || fileBytes.isEmpty()) {

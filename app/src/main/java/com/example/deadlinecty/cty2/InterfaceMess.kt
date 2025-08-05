@@ -279,12 +279,14 @@ fun EndTN(messageViewModel: MessageViewModel, conversationId: String) {
 }
 
 @Composable
-fun TinNhanItem( tin: TinNhan) {
+fun TinNhanItem(tin: TinNhan) {
     var showTime by remember { mutableStateOf(false) }
+
+    // ✅ Log thông tin tin nhắn
     Log.d("TinNhanItemhaha", "tin.isMine: ${tin.isMine}, message: ${tin.message}, messageType: ${tin.messageType}, imageUrl: ${tin.imageUrl}")
+
     val isMine = tin.isMine
     Log.d("isMine", Gson().toJson(isMine))
-
 
     Column(
         horizontalAlignment = if (isMine) Alignment.End else Alignment.Start,
@@ -304,21 +306,29 @@ fun TinNhanItem( tin: TinNhan) {
             Column {
                 when (tin.messageType) {
                     1 -> {
+                        // ✅ Hiển thị tin nhắn văn bản
                         tin.message.takeIf { it.isNotBlank() }?.let {
                             Text(text = it, color = Color.Black)
                         }
                     }
-
                     2 -> {
+                        // ✅ Tin nhắn hình ảnh
                         val imageUrl = tin.imageUrl
                         if (!imageUrl.isNullOrBlank()) {
+                            val fullUrl = getFullMediaUrl(imageUrl)
+
+                            // ✅ Log URL đã ghép hoàn chỉnh
+                            Log.d("AsyncImage_URL", fullUrl)
+
                             AsyncImage(
-                                model = getFullMediaUrl(imageUrl),
+                                model = fullUrl,
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(150.dp)
                                     .clip(RoundedCornerShape(8.dp))
                             )
+                        } else {
+                            Log.w("TinNhanItem", "imageUrl is null or blank")
                         }
                     }
 
@@ -339,8 +349,16 @@ fun TinNhanItem( tin: TinNhan) {
         }
     }
 }
+
 fun getFullMediaUrl(rawUrl: String): String {
-    return "https://short.techres.vn/$rawUrl"
+    Log.d("getfullmedia", Gson().toJson(rawUrl))
+
+    // Nếu rawUrl đã bắt đầu bằng http thì return luôn (tránh ghép sai)
+    return if (rawUrl.startsWith("http")) {
+        rawUrl
+    } else {
+        "https://short.techres.vn/$rawUrl"
+    }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
