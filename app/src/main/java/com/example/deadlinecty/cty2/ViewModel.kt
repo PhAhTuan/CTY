@@ -55,7 +55,6 @@ class HomeViewModel : ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.d("groupList err", e.toString())
-
             }
         }
     }
@@ -344,98 +343,7 @@ class MessageViewModel : ViewModel() {
         }
     }
 
-//    fun uploadMedia(mediaResponse: MediaResponse, uri: Uri, context: Context, conversationId: String) {
-//        viewModelScope.launch {
-//            try {
-//                // Gửi từng mediaResponse
-//                val response = RetrofitPhoto.retrofitMedia.upgenerateImage(
-//                    authorization = "Bearer 028a2bb7-227c-4581-85d3-257478e0e4b0",
-//                    mediaResponse = mediaResponse
-//                )
-//                // Xử lý phản hồi tương tự như trước
-//                if (response.isSuccessful) {
-//                    // Thêm logic để gửi thông tin hình ảnh qua socket
-//                    val mediaUrl = response.body()?.data?.firstOrNull()?.original?.url ?: ""
-//                    sendImageToSocket(mediaUrl, conversationId)
-//                }
-//                uploadImageAndSendSocket(context, uri, response.body()?.data ?: emptyList(), conversationId)
-//            } catch (e: Exception) {
-//                Log.e("UploadMediaError", "Error uploading media: ${e.message}")
-//            }
-//        }
-//    }
 
-
-//    fun uploadImageAndSendSocket(
-//        context: Context,
-//        uri: Uri,
-//        existingMediaItems: List<MediaItemUpload>,
-//        conversationId: String
-//    ) {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            try {
-//                val parts = mutableListOf<MultipartBody.Part>()
-//                val contentResolver = context.contentResolver
-//
-//                existingMediaItems.forEachIndexed { index, mediaItem ->
-//                    val fileName = queryFileName(context, uri)
-//                    val mimeType = contentResolver.getType(uri) ?: "image/jpeg"
-//                    Log.d("UploadImage", "Chuẩn bị upload ảnh từ Uri: $uri")
-//                    Log.d("UploadImage", "mediaId: ${mediaItem.mediaId}")
-//                    val fileBytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
-//
-//                    if (fileBytes == null || fileBytes.isEmpty()) {
-//                        Log.d("uploadImage", "Không có dữ liệu để upload từ InputStream: $uri")
-//                        return@forEachIndexed
-//                    }
-//
-//                    val requestBody = fileBytes.toRequestBody(mimeType.toMediaTypeOrNull())
-//                    val filePart = MultipartBody.Part.createFormData(
-//                        name = "medias[$index][file]",
-//                        filename = fileName,
-//                        body = requestBody
-//                    )
-//                    val mediaIdPart = MultipartBody.Part.createFormData(
-//                        name = "medias[$index][media_id]",
-//                        value = mediaItem.mediaId
-//                    )
-//                    val typePart = MultipartBody.Part.createFormData(
-//                        name = "medias[$index][type]",
-//                        value = "0" // type = 0 cho ảnh
-//                    )
-//
-//                    parts.add(filePart)
-//                    parts.add(mediaIdPart)
-//                    parts.add(typePart)
-//                }
-//                // 3. Gửi multipart upload
-//                val response = RetrofitPhoto.retrofitMedia.uploadImage(
-//                    authorization = "Bearer 028a2bb7-227c-4581-85d3-257478e0e4b0",
-//                    medias = parts
-//                )
-//                val uploadResponse = response.body()
-//                Log.d("UploadResponse", "Response: ${Gson().toJson(response.body())}")
-//                if (response.isSuccessful && uploadResponse != null) {
-//                    Log.d("UploadDebug", "Upload ảnh thành công")
-//                    val mediaIds = existingMediaItems.map { it.mediaId }
-//                    val keyError = randomKey()
-//                    val emitData = JSONObject().apply {
-//                        put("conversation_id", conversationId)
-//                        put("key_error", keyError)
-//                        put("media", JSONArray(mediaIds))
-//                    }
-//
-//                    SocketManager.socket?.emit("message-image-v1", emitData)
-//                    Log.d("EmitSocket", "Đã emit message-image-v1 với: $emitData")
-//                } else {
-//                    Log.d("UploadImage", "Upload không thành công: ${response.errorBody()?.string()}")
-//                }
-//
-//            } catch (e: Exception) {
-//                Log.d("uploadImage", "Lỗi Exception: ${e.message}", e)
-//            }
-//        }
-//    }
 
 }
 
