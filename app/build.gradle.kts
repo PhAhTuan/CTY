@@ -66,6 +66,8 @@ dependencies {
     }
     implementation("net.gotev:uploadservice:4.7.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
+    implementation("com.google.accompanist:accompanist-flowlayout:0.28.0")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

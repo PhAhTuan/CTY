@@ -58,6 +58,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import com.example.deadlinecty.cty2.MediaResponse
 import com.google.gson.Gson
@@ -207,16 +208,17 @@ fun EndTN(messageViewModel: MessageViewModel, conversationId: String) {
     var sendText by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            //  Gọi hàm generate metadata
-            val mediaItem = messageViewModel.getMediaInfoFromUri(context, it)
-            Log.d("MediaItem", Gson().toJson(mediaItem))
-            val mediaResponse = MediaResponse(medias = listOf(mediaItem))
-            messageViewModel.uploadMedia(mediaResponse, it, context, conversationId)
-
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris: List<Uri>? ->
+        uris?.take(5)?.let { selectedUris ->
+            val mediaItems = selectedUris.map { uri ->
+                messageViewModel.getMediaInfoFromUri(context, uri)
+            }
+            val mediaResponse = MediaResponse(medias = mediaItems)
+            messageViewModel.uploadMediaMultiple(mediaResponse, selectedUris, context, conversationId)
         }
     }
+
+
 
     Row(
         modifier = Modifier
@@ -281,12 +283,10 @@ fun EndTN(messageViewModel: MessageViewModel, conversationId: String) {
 @Composable
 fun TinNhanItem(tin: TinNhan) {
     var showTime by remember { mutableStateOf(false) }
-
-    // ✅ Log thông tin tin nhắn
-    Log.d("TinNhanItemhaha", "tin.isMine: ${tin.isMine}, message: ${tin.message}, messageType: ${tin.messageType}, imageUrl: ${tin.imageUrl}")
-
     val isMine = tin.isMine
-    Log.d("isMine", Gson().toJson(isMine))
+
+    // ✅ Biến lưu ảnh đang chọn
+    var selectedImageUrl by remember { mutableStateOf<String?>(null) }
 
     Column(
         horizontalAlignment = if (isMine) Alignment.End else Alignment.Start,
@@ -294,49 +294,57 @@ fun TinNhanItem(tin: TinNhan) {
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
+        val messageContent = @Composable {
+            when (tin.messageType) {
+                1 -> {
+                    tin.message.takeIf { it.isNotBlank() }?.let {
+                        Text(text = it, color = Color.Black)
+                    }
+                }
+                2 -> {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        tin.media.take(5).chunked(3).forEach { mediaChunk ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                mediaChunk.forEach { media ->
+                                    val fullUrl = getFullMediaUrl(media.original.url)
+                                    AsyncImage(
+                                        model = fullUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(100.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable {
+                                                selectedImageUrl = fullUrl // ✅ Gán ảnh được nhấn
+                                            }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    Text("Tin nhắn không xác định", color = Color.Gray)
+                }
+            }
+        }
+
         Box(
             modifier = Modifier
                 .clickable { showTime = !showTime }
-                .background(
-                    if (isMine) Color(0xFFDCF8C6) else Color.White,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(8.dp)
-        ) {
-            Column {
-                when (tin.messageType) {
-                    1 -> {
-                        // ✅ Hiển thị tin nhắn văn bản
-                        tin.message.takeIf { it.isNotBlank() }?.let {
-                            Text(text = it, color = Color.Black)
-                        }
-                    }
-                    2 -> {
-                        // ✅ Tin nhắn hình ảnh
-                        val imageUrl = tin.imageUrl
-                        if (!imageUrl.isNullOrBlank()) {
-                            val fullUrl = getFullMediaUrl(imageUrl)
-
-                            // ✅ Log URL đã ghép hoàn chỉnh
-                            Log.d("AsyncImage_URL", fullUrl)
-
-                            AsyncImage(
-                                model = fullUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(150.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                            )
-                        } else {
-                            Log.w("TinNhanItem", "imageUrl is null or blank")
-                        }
-                    }
-
-                    else -> {
-                        Text("Tin nhắn không xác định", color = Color.Gray)
-                    }
+                .let {
+                    if (tin.messageType == 2) it
+                    else it.background(
+                        if (isMine) Color(0xFFDCF8C6) else Color.White,
+                        shape = RoundedCornerShape(8.dp)
+                    ).padding(8.dp)
                 }
-            }
+        ) {
+            messageContent()
         }
 
         if (showTime) {
@@ -346,6 +354,25 @@ fun TinNhanItem(tin: TinNhan) {
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 2.dp)
             )
+        }
+
+        // ✅ Hiển thị overlay khi ảnh được chọn
+        if (selectedImageUrl != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.9f))
+                    .clickable { selectedImageUrl = null } // nhấn để đóng
+            ) {
+                AsyncImage(
+                    model = selectedImageUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
+            }
         }
     }
 }
