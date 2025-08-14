@@ -1,6 +1,5 @@
 package com.example.deadlinecty2.data
 
-import com.example.deadlinecty.cty2.MediaItemUpload
 import kotlinx.serialization.SerialName
 
 

@@ -104,10 +104,6 @@
             }
         }
 
-
-
-
-
         fun sendTinNhan(message: String) {
             val data = MessageSendModel(
                 message = message,
@@ -123,6 +119,7 @@
         }
 
         fun startListeningMessages(context: Context) {
+            SocketManager.socket?.off("listen-message-text-v1")
             SocketManager.socket?.on("listen-message-text-v1") { args ->
                 Log.d("listentext", "ĐÃ NHẬN SỰ KIỆN SOCKET: listen-message-text-v1")
                 val sharedPref = context.getSharedPreferences("myAppCache", Context.MODE_PRIVATE)

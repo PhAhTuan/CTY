@@ -8,6 +8,7 @@
     import androidx.compose.foundation.Image
     import androidx.compose.foundation.background
     import androidx.compose.foundation.clickable
+    import androidx.compose.foundation.gestures.detectTransformGestures
     import androidx.compose.foundation.layout.Arrangement
     import androidx.compose.foundation.layout.Box
     import androidx.compose.foundation.layout.Column
@@ -58,6 +59,10 @@
     import androidx.compose.material3.IconButton
     import androidx.compose.material3.MaterialTheme
     import androidx.compose.material3.TextFieldDefaults
+    import androidx.compose.runtime.mutableFloatStateOf
+    import androidx.compose.ui.geometry.Offset
+    import androidx.compose.ui.graphics.graphicsLayer
+    import androidx.compose.ui.input.pointer.pointerInput
     import androidx.compose.ui.layout.ContentScale
     import androidx.compose.ui.platform.LocalContext
     import com.example.deadlinecty.cty2.MediaResponse
@@ -220,9 +225,6 @@
                 messageViewModel.uploadMediaMultiple(mediaResponse, selectedUris, context, conversationId)
             }
         }
-
-
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -322,7 +324,7 @@
                                                 .size(100.dp)
                                                 .clip(RoundedCornerShape(8.dp))
                                                 .clickable {
-                                                    selectedImageUrl = fullUrl // ✅ Gán ảnh được nhấn
+                                                    selectedImageUrl = fullUrl
                                                 }
                                         )
                                     }
@@ -358,31 +360,49 @@
                     modifier = Modifier.padding(top = 2.dp)
                 )
             }
-
-            // ✅ Hiển thị overlay khi ảnh được chọn
+            //  Hiển thị overlay khi ảnh được chọn
             if (selectedImageUrl != null) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.9f))
-                        .clickable { selectedImageUrl = null } // nhấn để đóng
                 ) {
+                    var scale by remember { mutableFloatStateOf(1f) }
+                    var offset by remember { mutableStateOf(Offset.Zero) }
+
                     AsyncImage(
                         model = selectedImageUrl,
                         contentDescription = null,
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
+                            .fillMaxSize()
                             .align(Alignment.Center)
-                            .fillMaxWidth()
-                            .padding(16.dp)
+                            .pointerInput(Unit) {
+                                detectTransformGestures { _, pan, zoom, _ ->
+                                    scale = (scale * zoom).coerceIn(1f, 5f)
+                                    if (scale == 1f) {
+                                        offset = Offset.Zero
+                                    } else {
+                                        offset += pan
+                                    }
+                                }
+                            }
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                translationX = offset.x,
+                                translationY = offset.y
+                            )
+                            .clickable { selectedImageUrl = null }
                     )
                 }
             }
+
         }
     }
 
     fun getFullMediaUrl(rawUrl: String): String {
         Log.d("getfullmedia", Gson().toJson(rawUrl))
-
         // Nếu rawUrl đã bắt đầu bằng http thì return luôn (tránh ghép sai)
         return if (rawUrl.startsWith("http")) {
             rawUrl

@@ -40,7 +40,6 @@ fun HomeScreenMess(navController: NavController, viewModel: HomeViewModel) {
     LaunchedEffect(Unit) {
         viewModel.loadGroupChats()
     }
-
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier
@@ -55,7 +54,6 @@ fun HomeScreenMess(navController: NavController, viewModel: HomeViewModel) {
         }
     }
 }
-
 @Composable
 fun GroupChatMess(groupChat: DataChat, onClick: () -> Unit) {
     Row(
