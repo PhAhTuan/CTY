@@ -31,5 +31,6 @@ data class TinNhan(
     var media: List<Media> = emptyList(),
     var messageType: Int? = null,
     var time: String = "",
+    var avatarUrl: String? = null,
 )
 

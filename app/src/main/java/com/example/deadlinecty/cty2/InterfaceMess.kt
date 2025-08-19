@@ -1,13 +1,18 @@
     package com.example.deadlinecty2.data
 
-
+    import android.content.Context
+    import androidx.compose.ui.window.Dialog
+    import android.graphics.Bitmap
+    import android.media.MediaMetadataRetriever
     import android.net.Uri
     import android.util.Log
+    import android.widget.VideoView
     import androidx.activity.compose.rememberLauncherForActivityResult
     import androidx.activity.result.contract.ActivityResultContracts
     import androidx.compose.foundation.Image
     import androidx.compose.foundation.background
     import androidx.compose.foundation.clickable
+    import androidx.compose.foundation.gestures.detectTapGestures
     import androidx.compose.foundation.gestures.detectTransformGestures
     import androidx.compose.foundation.layout.Arrangement
     import androidx.compose.foundation.layout.Box
@@ -55,18 +60,25 @@
     import androidx.compose.foundation.lazy.items
     import androidx.compose.foundation.lazy.rememberLazyListState
     import androidx.compose.material.icons.automirrored.filled.Send
+    import androidx.compose.material.icons.filled.AreaChart
     import androidx.compose.material.icons.filled.Image
+    import androidx.compose.material.icons.filled.PlayArrow
     import androidx.compose.material3.IconButton
     import androidx.compose.material3.MaterialTheme
     import androidx.compose.material3.TextFieldDefaults
     import androidx.compose.runtime.mutableFloatStateOf
     import androidx.compose.ui.geometry.Offset
+    import androidx.compose.ui.graphics.asImageBitmap
     import androidx.compose.ui.graphics.graphicsLayer
     import androidx.compose.ui.input.pointer.pointerInput
     import androidx.compose.ui.layout.ContentScale
     import androidx.compose.ui.platform.LocalContext
+    import androidx.compose.ui.viewinterop.AndroidView
+    import androidx.core.net.toUri
     import com.example.deadlinecty.cty2.MediaResponse
     import com.google.gson.Gson
+    import kotlinx.coroutines.Dispatchers
+    import kotlinx.coroutines.withContext
     import org.json.JSONObject
 
 
@@ -78,6 +90,7 @@
             messageViewModel.loadMessagesFromApi(context,groupChat.conversationId)
             messageViewModel.startListeningMessages(context)
             messageViewModel.startListeningImageMessages(context, groupChat.conversationId)
+            messageViewModel.startListeningVideoMessages(context, groupChat.conversationId)
         }
 
         val json = JSONObject().apply {
@@ -225,6 +238,15 @@
                 messageViewModel.uploadMediaMultiple(mediaResponse, selectedUris, context, conversationId)
             }
         }
+        val videoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris: List<Uri>? ->
+            uris?.take(3)?.let { selectedUris ->
+                val mediaItems = selectedUris.map { uri ->
+                    messageViewModel.getMediaInfoFromUri(context, uri).copy(type = 2) // ✅ type = 2 cho video
+                }
+                val mediaResponse = MediaResponse(medias = mediaItems)
+                messageViewModel.uploadMediaMultipleVideo(mediaResponse, selectedUris, context, conversationId)
+            }
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -249,6 +271,20 @@
                     tint = Color.Gray
                 )
             }
+            IconButton(
+                onClick = { videoLauncher.launch("video/*") },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AreaChart, // icon video
+                    contentDescription = "Mở video",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .padding(start = 4.dp),
+                    tint = Color.Gray
+                )
+            }
+
             TextField(
                 value = sendText,
                 onValueChange = { newText -> sendText = newText },
@@ -288,6 +324,9 @@
     @Composable
     fun TinNhanItem(tin: TinNhan) {
         var showTime by remember { mutableStateOf(false) }
+        val context = LocalContext.current
+        val sharedPref = context.getSharedPreferences("myAppCache", Context.MODE_PRIVATE)
+        val myUserId = sharedPref.getInt("user_id", 0)
         val isMine = tin.isMine
 
         // ✅ Biến lưu ảnh đang chọn
@@ -332,6 +371,85 @@
                             }
                         }
                     }
+                    3 -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            tin.media.forEach { media ->
+                                val videoUrl = getFullMediaUrl(media.original.url)
+                                var showFullScreen by remember { mutableStateOf(false) }
+                                var thumbnailBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+                                // Lấy thumbnail của video
+                                LaunchedEffect(videoUrl) {
+                                    withContext(Dispatchers.IO) { // chạy nền
+                                        val retriever = MediaMetadataRetriever()
+                                        try {
+                                            retriever.setDataSource(videoUrl, HashMap())
+                                            thumbnailBitmap = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST)
+                                        } catch (_: Exception) {
+                                        } finally {
+                                            retriever.release()
+                                        }
+                                    }
+                                }
+                                if (showFullScreen) {
+                                    // Fullscreen Video
+                                    Dialog(onDismissRequest = { showFullScreen = false }) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black)
+                                        ) {
+                                            AndroidView(
+                                                factory = { context ->
+                                                    VideoView(context).apply {
+                                                        setVideoURI(videoUrl.toUri())
+                                                        setMediaController(null)
+                                                        setOnPreparedListener { mp ->
+                                                            mp.start()
+                                                        }
+                                                        requestFocus()
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    // Thumbnail + nút play
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(200.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .clickable { showFullScreen = true }
+                                    ) {
+                                        thumbnailBitmap?.let {
+                                            Image(
+                                                bitmap = it.asImageBitmap(),
+                                                contentDescription = null,
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        } ?: Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(Color.Black)
+                                        )
+
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = "Play",
+                                            tint = Color.White,
+                                            modifier = Modifier
+                                                .size(64.dp)
+                                                .align(Alignment.Center)
+                                                .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                     else -> {
                         Text("Tin nhắn không xác định", color = Color.Gray)
                     }
@@ -353,12 +471,27 @@
             }
 
             if (showTime) {
-                Text(
-                    text = tin.createdAt,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(top = 2.dp)
-                )
+                ) {
+                    if (tin.user?.userId != myUserId) {
+                        AsyncImage(
+                            model = tin.user?.avatar,
+                            contentDescription = "avatar",
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                    Text(
+                            text = tin.createdAt,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                }
             }
             //  Hiển thị overlay khi ảnh được chọn
             if (selectedImageUrl != null) {
@@ -366,6 +499,13 @@
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.9f))
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = {
+                                    selectedImageUrl = null
+                                }
+                            )
+                        }
                 ) {
                     var scale by remember { mutableFloatStateOf(1f) }
                     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -393,11 +533,10 @@
                                 translationX = offset.x,
                                 translationY = offset.y
                             )
-                            .clickable { selectedImageUrl = null }
+
                     )
                 }
             }
-
         }
     }
 
