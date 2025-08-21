@@ -119,7 +119,7 @@
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFFFFA500))
-                .padding(top = 32.dp, bottom = 8.dp),
+                .padding(top = 36.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -156,7 +156,7 @@
                         color = Color.White
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                //Spacer(modifier = Modifier.height(4.dp))
                 Row {
                     Text(
                         text = "${groupChat.noOfMember} Member",

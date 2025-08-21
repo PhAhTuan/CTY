@@ -1,6 +1,5 @@
 package com.example.deadlinecty.cty2
 
-import android.R.attr.contentDescription
 import  android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -34,7 +33,9 @@ import coil.compose.AsyncImage
 import com.example.deadlinecty2.data.DataChat
 import com.example.deadlinecty2.data.HomeViewModel
 import com.example.deadlinecty.R
-
+import com.google.gson.Gson
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun HomeScreenMess(navController: NavController, viewModel: HomeViewModel) {
@@ -71,7 +72,7 @@ fun GroupChatMess(groupChat: DataChat, onClick: () -> Unit) {
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape),
-            placeholder  = painterResource(R.drawable.avt_trang_den),
+            placeholder = painterResource(R.drawable.avt_trang_den),
             error = painterResource(R.drawable.avt_trang_den)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -89,11 +90,12 @@ fun GroupChatMess(groupChat: DataChat, onClick: () -> Unit) {
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = groupChat.time,
+                    text = formatChatTime(groupChat.time),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     color = Color.Gray
                 )
+                Log.d("time", Gson().toJson(groupChat.time))
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(
@@ -121,4 +123,39 @@ fun GroupChatMess(groupChat: DataChat, onClick: () -> Unit) {
         }
     }
 }
+
+
+fun formatChatTime(apiTime: String): String {
+    return try {
+        val parser = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        val date = parser.parse(apiTime) ?: return apiTime
+
+        val now = Calendar.getInstance()
+        val messageTime = Calendar.getInstance().apply { time = date }
+
+        return when {
+            // Nếu cùng ngày hôm nay → chỉ hiển thị giờ:phút
+            now.get(Calendar.YEAR) == messageTime.get(Calendar.YEAR) &&
+                    now.get(Calendar.DAY_OF_YEAR) == messageTime.get(Calendar.DAY_OF_YEAR) -> {
+                SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+            }
+
+            // Nếu là hôm qua → hiển thị chữ "Hôm qua"
+            now.get(Calendar.YEAR) == messageTime.get(Calendar.YEAR) &&
+                    now.get(Calendar.DAY_OF_YEAR) - messageTime.get(Calendar.DAY_OF_YEAR) == 1 -> {
+                "Hôm qua"
+            }
+
+            // Còn lại → hiển thị ngày/tháng
+            else -> {
+                SimpleDateFormat("dd/MM", Locale.getDefault()).format(date)
+            }
+        }
+    } catch (e: Exception) {
+        apiTime // fallback nếu parse lỗi
+    }
+}
+
 
