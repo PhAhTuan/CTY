@@ -39,14 +39,24 @@
                             groupList.addAll(
                                 response.data.map { item ->
                                     Log.d("item", Gson().toJson(item))
+                                    val lastMessageText = when (item.lastMessage.messageType) {
+                                        1 -> item.lastMessage.message.ifBlank { "Không có tin nhắn" }
+                                        2 -> " ${item.lastMessage.userName} đã gửi một hình ảnh"
+                                        3 -> " ${item.lastMessage.userName} đã gửi một video"
+                                        4 -> " ${item.lastMessage.userName} đã gửi một file"
+                                        5 -> " ${item.lastMessage.userName} đã gửi một sticker"
+                                        else -> "Tin nhắn mới"
+                                    }
+                                    Log.d("type message", Gson().toJson(item.lastMessage.messageType))
                                     DataChat(
                                         conversationId = item.conversationId  ,
                                         name = item.name ,
-                                        lastMessage = item.lastMessage.message.ifBlank { "Không có tin nhắn" },
+                                        lastMessage = lastMessageText,
                                         time = item.lastActivity ,
                                         avatarUrl = item.avatar.thumb.url,
                                         noOfNotSeen = item.noOfNotSeen ,
-                                        noOfMember = item.noOfMember
+                                        noOfMember = item.noOfMember,
+                                        avatar = item.avatar
                                     )
                                 }
                             )
@@ -240,7 +250,6 @@
                         val messageType = data.optInt("message_type", 2)
                         val mediaArray = data.getJSONArray("media")
                         val keyError = data.optString("key_error", randomKey())
-
                         // Bắt đầu parse dữ liệu media theo cấu trúc mới
                         val mediaList = mutableListOf<Media>()
 
@@ -259,7 +268,6 @@
                                     height = obj.optInt("height"),
                                 )
                             }
-
                             // Parse các đối tượng con
                             val originalInfo = parseImageInfo(mediaObject.optJSONObject("original"))
                             val mediumInfo = parseImageInfo(mediaObject.optJSONObject("medium"))
@@ -277,7 +285,6 @@
                             )
                             mediaList.add(mediaItem)
                         }
-
                         // Chỉ thêm tin nhắn nếu danh sách media không rỗng
                         if (mediaList.isNotEmpty()) {
                             viewModelScope.launch {

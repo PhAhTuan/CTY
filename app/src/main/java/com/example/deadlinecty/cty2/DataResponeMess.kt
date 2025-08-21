@@ -158,9 +158,6 @@ data class ImageInfo(
     val size: Int,
     val width: Int,
     val height: Int,
-
-//    @SerializedName("link_full")
-//    val linkFull: String? = null
 )
 //----------------------------------------------------
 data class MessageApiResponse(

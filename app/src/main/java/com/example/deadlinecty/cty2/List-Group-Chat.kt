@@ -1,5 +1,6 @@
 package com.example.deadlinecty.cty2
 
+import android.R.attr.contentDescription
 import  android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.deadlinecty2.data.DataChat
 import com.example.deadlinecty2.data.HomeViewModel
 import com.example.deadlinecty.R
@@ -56,18 +58,21 @@ fun HomeScreenMess(navController: NavController, viewModel: HomeViewModel) {
 }
 @Composable
 fun GroupChatMess(groupChat: DataChat, onClick: () -> Unit) {
+    val linkAvt = "https://short.techres.vn/"
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
             .clickable { onClick() }
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.avt_trang_den),
-            contentDescription = "Ảnh nhóm chat",
+        AsyncImage(
+            model = linkAvt + groupChat.avatar.original.url,
+            contentDescription = "Anh nhom chat",
             modifier = Modifier
                 .size(48.dp)
-                .clip(CircleShape)
+                .clip(CircleShape),
+            placeholder  = painterResource(R.drawable.avt_trang_den),
+            error = painterResource(R.drawable.avt_trang_den)
         )
         Spacer(modifier = Modifier.width(8.dp))
 
@@ -75,6 +80,7 @@ fun GroupChatMess(groupChat: DataChat, onClick: () -> Unit) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Text(
                     text = groupChat.name,
                     fontWeight = FontWeight.Bold,

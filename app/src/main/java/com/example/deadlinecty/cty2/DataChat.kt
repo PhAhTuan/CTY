@@ -15,7 +15,8 @@ data class DataChat(
     @SerialName("no_of_not_seen")
     var noOfNotSeen: Int = 0,
     @SerialName("no_of_member")
-    var noOfMember: Int = 0
+    var noOfMember: Int = 0,
+    val avatar: Avatar
 )
 
 data class TinNhan(

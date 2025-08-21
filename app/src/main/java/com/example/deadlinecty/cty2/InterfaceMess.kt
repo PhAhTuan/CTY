@@ -48,14 +48,12 @@
     import androidx.compose.ui.res.painterResource
     import androidx.compose.ui.text.font.FontWeight
     import androidx.compose.ui.text.style.TextOverflow
-    import androidx.compose.ui.tooling.preview.Preview
     import androidx.compose.ui.unit.dp
     import androidx.compose.ui.unit.sp
     import com.example.deadlinecty.R
     import androidx.compose.runtime.LaunchedEffect
     import androidx.lifecycle.viewmodel.compose.viewModel
     import androidx.navigation.NavController
-    import androidx.navigation.compose.rememberNavController
     import coil.compose.AsyncImage
     import androidx.compose.foundation.lazy.items
     import androidx.compose.foundation.lazy.rememberLazyListState
@@ -116,11 +114,12 @@
     }
     @Composable
     fun HeadTN(groupChat: DataChat, navController: NavController){
+        val linkAvt = "https://short.techres.vn/"
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFFFFA500))
-                .padding(top = 28.dp, bottom = 8.dp),
+                .padding(top = 32.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -134,13 +133,14 @@
                     }
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Image(
-                painter = painterResource(id = R.drawable.avt_trang_den),
-                contentDescription = "anh gr chat",
+            AsyncImage(
+                model = linkAvt + groupChat.avatar.original.url,
+                contentDescription = "Anh nhom chat",
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(CircleShape)
-
+                    .clip(CircleShape),
+                placeholder  = painterResource(R.drawable.avt_trang_den),
+                error = painterResource(R.drawable.avt_trang_den)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -550,18 +550,3 @@
         }
     }
 
-    @Preview(showBackground = true, showSystemUi = true)
-    @Composable
-    fun ShowHomeScreenTN(){
-        val fakeGroupChat = DataChat(
-            name = "Nhóm Công ty",
-            lastMessage = "Thông báo họp lúc 3h",
-            time = "10:45",
-            avatarUrl = "",
-            noOfNotSeen = 2,
-            noOfMember = 5,
-            conversationId = "",
-        )
-        val navController = rememberNavController()
-        HomeScreenTN(groupChat = fakeGroupChat, navController)
-    }
